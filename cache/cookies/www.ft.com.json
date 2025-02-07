@@ -1,0 +1,193 @@
+{
+  "timestamp": "2025-02-07T22:17:07.311549",
+  "cookies": [
+    {
+      "name": "FTConsent",
+      "value": "true",
+      "domain": ".ft.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "cookieConsent",
+      "value": "true",
+      "domain": ".ft.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "accept_cookies",
+      "value": "true",
+      "domain": ".ft.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "FtComEntryPoint",
+      "value": "/",
+      "domain": ".ft.com",
+      "path": "/",
+      "expires": 1738964813.43674,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "FTAllocation",
+      "value": "7b1898e3-b8ee-4aa0-9c8d-3ccb30817b06",
+      "domain": ".ft.com",
+      "path": "/",
+      "expires": 1770499013.436843,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "FTClientSessionId",
+      "value": "c2cd96e2-f671-4a8f-b678-ccf1b47ce877",
+      "domain": ".ft.com",
+      "path": "/",
+      "expires": 1773523013.436892,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "spoor-id",
+      "value": "d4bc394e-69b2-4f0e-861c-626eafb1970b",
+      "domain": ".ft.com",
+      "path": "/",
+      "expires": 1770499013.436935,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "o-typography-fonts-loaded",
+      "value": "1",
+      "domain": ".ft.com",
+      "path": "/",
+      "expires": 1739567813.854027,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_cb",
+      "value": "BRBxyxBJXbHTBsPilD",
+      "domain": ".ft.com",
+      "path": "/",
+      "expires": 1773091013,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_t_tests",
+      "value": "eyJQeW1qVUlhS1ZqSnQ4Ijp7ImNob3NlblZhcmlhbnQiOiJDIiwic3BlY2lmaWNMb2NhdGlvbiI6WyJESDlaVVgiXX0sImxpZnRfZXhwIjoibSJ9",
+      "domain": ".ft.com",
+      "path": "/",
+      "expires": 1738966613,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "__exponea_etc__",
+      "value": "db94f8d9-5bd4-4c1f-8eb2-5b14e62bacfd",
+      "domain": ".www.ft.com",
+      "path": "/",
+      "expires": 1754687814,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "__exponea_time2__",
+      "value": "-0.12297987937927246",
+      "domain": ".www.ft.com",
+      "path": "/",
+      "expires": 1754687814,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "consentUUID",
+      "value": "9bc61709-4ed5-4f0d-ba5f-4eea2f07234c",
+      "domain": ".ft.com",
+      "path": "/",
+      "expires": 1770497436.508597,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "usnatUUID",
+      "value": "93fe4bc1-5b6c-4d87-830d-a6cb08b9122b",
+      "domain": ".ft.com",
+      "path": "/",
+      "expires": 1770497436.666087,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "OriginalReferrer",
+      "value": "https://www.google.com/",
+      "domain": ".ft.com",
+      "path": "/",
+      "expires": 1738964813.436609,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_cb_svref",
+      "value": "https%3A%2F%2Fwww.google.com%2F",
+      "domain": ".ft.com",
+      "path": "/",
+      "expires": 1738964813,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_chartbeat2",
+      "value": ".1738961435639.1738963013879.1.2LlZUBMQ1lbn5n_BBiqIBADOPg6p.8",
+      "domain": ".ft.com",
+      "path": "/",
+      "expires": 1773091013,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "FTConsent",
+      "value": "true",
+      "domain": ".ft.com",
+      "path": "/"
+    },
+    {
+      "name": "cookieConsent",
+      "value": "true",
+      "domain": ".ft.com",
+      "path": "/"
+    },
+    {
+      "name": "accept_cookies",
+      "value": "true",
+      "domain": ".ft.com",
+      "path": "/"
+    }
+  ]
+}

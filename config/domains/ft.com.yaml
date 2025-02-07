@@ -1,0 +1,99 @@
+# Financial Times specific settings
+
+# Viewport settings
+viewport:
+  width: 1200
+  height: 800
+
+# Custom user agent
+user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+
+# Block unnecessary resources
+block_resources:
+  - "analytics"
+  - "advertising"
+  - "tracking"
+
+# Custom JavaScript for enhanced functionality
+scripts:
+  # Handle cookie consent
+  - |
+    function handleCookieConsent() {
+      // Accept cookie consent
+      const consentButtons = [
+        'button[title="Accept cookies"]',
+        'button[data-trackable="accept-cookies"]',
+        '#consent-accept-all',
+        '.cookie-consent__button--accept',
+        'button:has-text("Accept")',
+        'button[data-trackable="accept-consent"]'
+      ];
+      
+      for (const selector of consentButtons) {
+        const button = document.querySelector(selector);
+        if (button) {
+          button.click();
+          console.log('Clicked cookie consent button:', selector);
+          break;
+        }
+      }
+      
+      // Close any other dialogs or banners
+      const closeButtons = document.querySelectorAll('button[aria-label*="close" i], button[title*="close" i], button.close-button');
+      closeButtons.forEach(button => button.click());
+    }
+    setInterval(handleCookieConsent, 1000);
+  
+  # Handle subscription prompts
+  - |
+    function handleSubscriptionPrompts() {
+      const elements = [
+        '.barrier-wrapper',
+        '.subscription-prompt',
+        '#barrier-page',
+        '[data-trackable="subscription-banner"]'
+      ].forEach(selector => {
+        const element = document.querySelector(selector);
+        if (element) element.remove();
+      });
+    }
+    setInterval(handleSubscriptionPrompts, 1000);
+
+# Custom styles
+styles:
+  - |
+    /* Hide subscription prompts and banners */
+    .barrier-wrapper,
+    .subscription-prompt,
+    #barrier-page,
+    [data-trackable="subscription-banner"] { display: none !important; }
+    
+    /* Ensure article content is visible */
+    .article__content,
+    .article-body,
+    .article__body { display: block !important; }
+
+# Cookie settings
+cookies:
+  - name: "FTConsent"
+    value: "true"
+    domain: ".ft.com"
+    path: "/"
+  - name: "cookieConsent"
+    value: "true"
+    domain: ".ft.com"
+    path: "/"
+  - name: "accept_cookies"
+    value: "true"
+    domain: ".ft.com"
+    path: "/"
+
+# Headers
+headers:
+  "Accept-Language": "en-US,en;q=0.9"
+  "DNT": "1"
+
+# Timing settings
+timing:
+  default_timeout: 30000
+  default_navigation_timeout: 30000 

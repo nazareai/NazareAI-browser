@@ -1,0 +1,197 @@
+# YouTube-specific settings
+
+# Viewport settings for optimal video viewing
+viewport:
+  width: 1200
+  height: 800
+
+# Custom user agent
+user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+
+# Block unnecessary resources for better performance
+block_resources:
+  - "analytics"
+  - "doubleclick"
+  - "googlesyndication"
+  - "adservice"
+
+# Custom JavaScript for enhanced functionality
+scripts:
+  # Auto-skip ads when possible
+  - |
+    function skipAds() {
+      const skipButton = document.querySelector('.ytp-ad-skip-button');
+      if (skipButton) skipButton.click();
+    }
+    setInterval(skipAds, 1000);
+  
+  # Auto-accept cookies and handle consent
+  - |
+    function handleConsent() {
+      // Accept cookie consent
+      const consentButtons = [
+        'button[aria-label="Accept all"]',
+        'button[aria-label="Accept the use of cookies and other data for the purposes described"]',
+        '#content > div.body.style-scope.ytd-consent-bump-v2-lightbox > div.eom-buttons.style-scope.ytd-consent-bump-v2-lightbox > div:nth-child(1) > ytd-button-renderer:nth-child(2) > a',
+        'button.VfPpkd-LgbsSe.VfPpkd-LgbsSe-OWXEXe-k8QpJ.VfPpkd-LgbsSe-OWXEXe-dgl2Hf.nCP5yc.AjY5Oe.DuMIQc.LQeN7.Nc7WLe'
+      ];
+      
+      for (const selector of consentButtons) {
+        const button = document.querySelector(selector);
+        if (button) {
+          button.click();
+          break;
+        }
+      }
+      
+      // Handle other popups
+      const dismissButtons = document.querySelectorAll('button[aria-label*="dismiss" i], button[aria-label*="close" i]');
+      dismissButtons.forEach(button => button.click());
+    }
+    setInterval(handleConsent, 1000);
+  
+  # Make search input visible and ready
+  - |
+    function prepareSearch() {
+      // Find search box by multiple selectors
+      const searchSelectors = [
+        'input[name="search_query"]',
+        'input#search',
+        'input[aria-label="Search"]'
+      ];
+      
+      let searchBox = null;
+      for (const selector of searchSelectors) {
+        searchBox = document.querySelector(selector);
+        if (searchBox) break;
+      }
+      
+      if (searchBox) {
+        // Make search box visible and interactive
+        searchBox.style.setProperty('opacity', '1', 'important');
+        searchBox.style.setProperty('visibility', 'visible', 'important');
+        searchBox.style.setProperty('display', 'block', 'important');
+        searchBox.style.setProperty('pointer-events', 'auto', 'important');
+        
+        // Make parent elements visible
+        let parent = searchBox.parentElement;
+        while (parent) {
+          parent.style.setProperty('opacity', '1', 'important');
+          parent.style.setProperty('visibility', 'visible', 'important');
+          parent.style.setProperty('display', parent.style.display || 'block', 'important');
+          parent = parent.parentElement;
+        }
+        
+        // Ensure search box is enabled and editable
+        searchBox.disabled = false;
+        searchBox.readOnly = false;
+        searchBox.tabIndex = 0;
+        
+        // Focus the search box
+        searchBox.focus();
+      }
+      
+      // Also prepare the search button
+      const searchButton = document.querySelector('button#search-icon-legacy');
+      if (searchButton) {
+        searchButton.style.setProperty('opacity', '1', 'important');
+        searchButton.style.setProperty('visibility', 'visible', 'important');
+        searchButton.style.setProperty('display', 'block', 'important');
+        searchButton.style.setProperty('pointer-events', 'auto', 'important');
+        searchButton.disabled = false;
+      }
+    }
+    setInterval(prepareSearch, 500);
+  
+  # Enhance video player
+  - |
+    function enhancePlayer() {
+      // Auto-hide annotations
+      const annotations = document.querySelectorAll('.ytp-ce-element');
+      annotations.forEach(a => a.style.display = 'none');
+      
+      // Set quality to highest available
+      const qualityButton = document.querySelector('.ytp-settings-button');
+      if (qualityButton) {
+        qualityButton.click();
+        setTimeout(() => {
+          const qualityMenu = document.querySelector('.ytp-quality-menu');
+          if (qualityMenu) {
+            const qualities = qualityMenu.querySelectorAll('.ytp-menuitem');
+            qualities[0]?.click();
+          }
+          qualityButton.click();
+        }, 500);
+      }
+    }
+    setTimeout(enhancePlayer, 2000);
+
+# Custom styles for better readability
+styles:
+  - |
+    /* Hide end cards and overlays */
+    .ytp-ce-element { display: none !important; }
+    .ytp-pause-overlay { display: none !important; }
+    .ytd-watch-next-secondary-results-renderer { display: none !important; }
+    
+    /* Improve search results visibility */
+    ytd-video-renderer { margin-bottom: 1rem !important; }
+    #video-title { font-size: 1.2rem !important; }
+    
+    /* Hide promotional content */
+    .ytd-promoted-video-renderer,
+    .ytd-promoted-sparkles-web-renderer,
+    .ytd-display-ad-renderer { display: none !important; }
+    
+    /* Ensure search box is visible */
+    input[name="search_query"],
+    input#search,
+    input[aria-label="Search"],
+    ytd-searchbox,
+    ytd-searchbox-spt,
+    #search-form,
+    #container.ytd-searchbox {
+      opacity: 1 !important;
+      visibility: visible !important;
+      display: block !important;
+      pointer-events: auto !important;
+      position: relative !important;
+      z-index: 9999 !important;
+    }
+
+# Permissions needed for video playback
+permissions:
+  - "camera"
+  - "microphone"
+  - "geolocation"
+
+# Custom headers
+headers:
+  "Accept-Language": "en-US,en;q=0.9"
+  "DNT": "1"
+
+# Timing settings
+timing:
+  default_timeout: 60000  # Longer timeout for video loading
+  default_navigation_timeout: 30000
+
+# Geolocation settings (if needed)
+geolocation:
+  latitude: 37.7749
+  longitude: -122.4194
+  accuracy: 100
+
+# Cookie settings
+cookies:
+  - name: "CONSENT"
+    value: "YES+"
+    domain: ".youtube.com"
+    path: "/"
+  - name: "VISITOR_INFO1_LIVE"
+    value: "yes"
+    domain: ".youtube.com"
+    path: "/"
+  - name: "PREF"
+    value: "f6=40000000&hl=en"  # Enable highest quality by default
+    domain: ".youtube.com"
+    path: "/" 

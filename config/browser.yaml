@@ -1,0 +1,120 @@
+# Browser Configuration
+
+# Browser settings
+browser:
+  headless: false
+  viewport:
+    width: 1920
+    height: 1080
+  default_timeout: 30000
+  default_navigation_timeout: 30000
+  downloads_path: "./downloads"
+  screenshots_path: "./screenshots"
+
+# LLM settings
+llm:
+  model: "anthropic/claude-3.5-sonnet:beta"
+  temperature: 0.7
+  max_tokens: 2000
+  context_window: 100000
+
+# Plugin settings
+plugins:
+  custom_plugins_dir: "./plugins"
+  
+  # Built-in plugins configuration
+  adblocker:
+    enabled: true
+    block_social_media: true
+    block_analytics: true
+    
+  privacy:
+    enabled: true
+    clear_cookies_on_start: true
+    spoof_fingerprint: true
+    
+  autoscroll:
+    enabled: true
+    scroll_amount: 800
+    scroll_delay: 1000
+
+# Domain-specific settings directory
+domains:
+  config_dir: "./config/domains"
+  
+# Logging settings
+logging:
+  level: "INFO"
+  file: "browser.log"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Cache settings
+cache:
+  enabled: true
+  directory: "./cache"
+  max_size_mb: 1000
+  ttl_seconds: 3600
+
+# Cookie Settings
+cookies:
+  max_age_days: 7
+  domains:
+    ft.com:
+      consent_required: true
+      default_cookies:
+        - name: FTConsent
+          value: true
+          domain: .ft.com
+        - name: cookieConsent
+          value: true
+          domain: .ft.com
+        - name: accept_cookies
+          value: true
+          domain: .ft.com
+      consent_selectors:
+        - button[title="Accept cookies"]
+        - button[data-trackable="accept-cookies"]
+        - #consent-accept-all
+        - .cookie-consent__button--accept
+
+# Resource Management
+resource_blocking:
+  enabled: true
+  blocked_resources:
+    - "*analytics*"
+    - "*tracking*"
+    - "*metrics*"
+    - "*advertisement*"
+  allowed_domains:
+    - ft.com
+    - www.ft.com
+    - assets.ft.com
+
+# Browser Launch Settings
+launch_args:
+  - --disable-gpu
+  - --disable-dev-shm-usage
+  - --disable-setuid-sandbox
+  - --no-sandbox
+  - --disable-web-security
+  - --disable-features=IsolateOrigins,site-per-process
+
+# Headers
+headers:
+  ft.com:
+    Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8
+    Accept-Language: en-US,en;q=0.5
+    DNT: 1
+    Upgrade-Insecure-Requests: 1
+
+# Navigation Settings
+navigation:
+  timeout: 30000
+  wait_until: networkidle
+  referer: https://www.google.com
+
+# Element Finding Settings
+element_finding:
+  timeout: 10000
+  retry_interval: 500
+  max_retries: 3 
