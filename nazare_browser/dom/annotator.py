@@ -13,20 +13,97 @@ class DOMAnnotator:
         Analyze the page and create semantic annotations for important elements.
         Returns a JSON string with annotated elements.
         """
-        # Get page content and create soup
-        content = await page.content()
-        soup = BeautifulSoup(content, 'html.parser')
+        # Inject annotation script for real-time element tracking
+        await page.evaluate("""() => {
+            window.nazareAnnotations = {};
+            
+            function getElementContext(element) {
+                return {
+                    role: element.getAttribute('role') || element.tagName.toLowerCase(),
+                    text: element.textContent.trim(),
+                    isVisible: element.offsetWidth > 0 && element.offsetHeight > 0,
+                    attributes: Object.fromEntries(
+                        Array.from(element.attributes)
+                            .map(attr => [attr.name, attr.value])
+                    ),
+                    position: element.getBoundingClientRect().toJSON(),
+                    semanticType: determineSemanticType(element)
+                };
+            }
+            
+            function determineSemanticType(element) {
+                const tag = element.tagName.toLowerCase();
+                const role = element.getAttribute('role');
+                const type = element.getAttribute('type');
+                
+                if (tag === 'button' || role === 'button') return 'button';
+                if (tag === 'a' || role === 'link') return 'link';
+                if (tag === 'input') {
+                    if (type === 'text') return 'textbox';
+                    if (type === 'search') return 'searchbox';
+                    if (type === 'checkbox') return 'checkbox';
+                    if (type === 'radio') return 'radio';
+                    return type;
+                }
+                if (tag === 'select') return 'dropdown';
+                if (role === 'navigation') return 'navigation';
+                if (role === 'main') return 'main-content';
+                if (role === 'complementary') return 'sidebar';
+                if (tag.match(/^h[1-6]$/)) return 'heading';
+                
+                return 'generic';
+            }
+            
+            // Annotate all elements and store their context
+            function annotateElements() {
+                const elements = document.querySelectorAll('*');
+                elements.forEach((el, index) => {
+                    const elementId = el.id || `nazare-${index}`;
+                    el.id = elementId;
+                    
+                    // Store element context
+                    window.nazareAnnotations[elementId] = getElementContext(el);
+                    
+                    // Add visual indicators for interactive elements
+                    if (el.tagName.toLowerCase() in {
+                        'button': true, 'a': true, 'input': true, 
+                        'select': true, 'textarea': true
+                    } || el.getAttribute('role') in {
+                        'button': true, 'link': true, 'menuitem': true,
+                        'tab': true, 'checkbox': true, 'radio': true
+                    }) {
+                        el.classList.add('nazare-interactive');
+                    }
+                });
+            }
+            
+            // Initial annotation
+            annotateElements();
+            
+            // Set up observer for dynamic content
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach(mutation => {
+                    if (mutation.addedNodes.length) {
+                        annotateElements();
+                    }
+                });
+            });
+            
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['role', 'aria-*']
+            });
+        }""")
         
-        # Clear previous cache
-        self.cached_elements = {}
+        # Get annotated elements
+        annotations = await page.evaluate("""() => {
+            return window.nazareAnnotations;
+        }""")
         
-        # Collect and annotate interactive elements
-        annotations = {
-            "clickable": await self._find_clickable(page),
-            "forms": await self._find_forms(page),
-            "navigation": await self._find_navigation(page),
-            "content": await self._find_content_areas(page)
-        }
+        # Cache elements for faster lookup
+        self.cached_elements = annotations
         
         return json.dumps(annotations, indent=2)
 

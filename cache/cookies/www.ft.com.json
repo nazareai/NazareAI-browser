@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-02-07T22:17:07.311549",
+  "timestamp": "2025-02-09T12:16:07.674598",
   "cookies": [
     {
       "name": "FTConsent",
@@ -32,21 +32,11 @@
       "sameSite": "Lax"
     },
     {
-      "name": "FtComEntryPoint",
-      "value": "/",
-      "domain": ".ft.com",
-      "path": "/",
-      "expires": 1738964813.43674,
-      "httpOnly": false,
-      "secure": false,
-      "sameSite": "Lax"
-    },
-    {
       "name": "FTAllocation",
       "value": "7b1898e3-b8ee-4aa0-9c8d-3ccb30817b06",
       "domain": ".ft.com",
       "path": "/",
-      "expires": 1770499013.436843,
+      "expires": 1770635754.77183,
       "httpOnly": false,
       "secure": false,
       "sameSite": "Lax"
@@ -56,7 +46,7 @@
       "value": "c2cd96e2-f671-4a8f-b678-ccf1b47ce877",
       "domain": ".ft.com",
       "path": "/",
-      "expires": 1773523013.436892,
+      "expires": 1773659754.771849,
       "httpOnly": false,
       "secure": false,
       "sameSite": "Lax"
@@ -66,7 +56,7 @@
       "value": "d4bc394e-69b2-4f0e-861c-626eafb1970b",
       "domain": ".ft.com",
       "path": "/",
-      "expires": 1770499013.436935,
+      "expires": 1770635754.771865,
       "httpOnly": false,
       "secure": false,
       "sameSite": "Lax"
@@ -76,7 +66,7 @@
       "value": "1",
       "domain": ".ft.com",
       "path": "/",
-      "expires": 1739567813.854027,
+      "expires": 1739704555.137021,
       "httpOnly": false,
       "secure": false,
       "sameSite": "Lax"
@@ -86,17 +76,7 @@
       "value": "BRBxyxBJXbHTBsPilD",
       "domain": ".ft.com",
       "path": "/",
-      "expires": 1773091013,
-      "httpOnly": false,
-      "secure": true,
-      "sameSite": "Lax"
-    },
-    {
-      "name": "_t_tests",
-      "value": "eyJQeW1qVUlhS1ZqSnQ4Ijp7ImNob3NlblZhcmlhbnQiOiJDIiwic3BlY2lmaWNMb2NhdGlvbiI6WyJESDlaVVgiXX0sImxpZnRfZXhwIjoibSJ9",
-      "domain": ".ft.com",
-      "path": "/",
-      "expires": 1738966613,
+      "expires": 1773227755,
       "httpOnly": false,
       "secure": true,
       "sameSite": "Lax"
@@ -106,7 +86,7 @@
       "value": "db94f8d9-5bd4-4c1f-8eb2-5b14e62bacfd",
       "domain": ".www.ft.com",
       "path": "/",
-      "expires": 1754687814,
+      "expires": 1754824555,
       "httpOnly": false,
       "secure": true,
       "sameSite": "None"
@@ -116,7 +96,7 @@
       "value": "-0.12297987937927246",
       "domain": ".www.ft.com",
       "path": "/",
-      "expires": 1754687814,
+      "expires": 1754824555,
       "httpOnly": false,
       "secure": true,
       "sameSite": "None"
@@ -143,30 +123,40 @@
     },
     {
       "name": "OriginalReferrer",
-      "value": "https://www.google.com/",
+      "value": "None",
       "domain": ".ft.com",
       "path": "/",
-      "expires": 1738964813.436609,
+      "expires": 1739101554.771752,
       "httpOnly": false,
       "secure": false,
       "sameSite": "Lax"
     },
     {
-      "name": "_cb_svref",
-      "value": "https%3A%2F%2Fwww.google.com%2F",
+      "name": "FtComEntryPoint",
+      "value": "/",
       "domain": ".ft.com",
       "path": "/",
-      "expires": 1738964813,
+      "expires": 1739101554.771813,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_chartbeat2",
+      "value": ".1738961435639.1739099755153.101.DWoX2WBglDKBc-eMb3vVsItz26v.1",
+      "domain": ".ft.com",
+      "path": "/",
+      "expires": 1773227755,
       "httpOnly": false,
       "secure": true,
       "sameSite": "Lax"
     },
     {
-      "name": "_chartbeat2",
-      "value": ".1738961435639.1738963013879.1.2LlZUBMQ1lbn5n_BBiqIBADOPg6p.8",
+      "name": "_cb_svref",
+      "value": "external",
       "domain": ".ft.com",
       "path": "/",
-      "expires": 1773091013,
+      "expires": 1739101555,
       "httpOnly": false,
       "secure": true,
       "sameSite": "Lax"

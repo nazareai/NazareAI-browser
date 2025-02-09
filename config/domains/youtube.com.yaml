@@ -1,19 +1,120 @@
-# YouTube-specific settings
+# YouTube domain configuration
 
-# Viewport settings for optimal video viewing
+# Viewport settings
 viewport:
-  width: 1200
-  height: 800
+  width: 1920
+  height: 1080
+
+# Custom headers
+headers:
+  Accept-Language: "en-US,en;q=0.9"
+  DNT: "1"
+
+# Cookie settings
+cookies:
+  consent_required: true
+  consent_selectors:
+    - "button[aria-label*='Accept all']"
+    - "button[aria-label*='Accept the use of cookies']"
+    - "#consent-bump-accept-button"
+  default_cookies:
+    - name: "CONSENT"
+      value: "YES+"
+      domain: ".youtube.com"
+
+# Resource blocking
+block_resources:
+  - "*doubleclick.net*"
+  - "*google-analytics.com*"
+  - "*googlesyndication.com*"
+  - "*.ytimg.com/*/annotations/*"
+
+# Element selectors
+selectors:
+  search_box: "input#search"
+  search_button: "button#search-icon-legacy"
+  video_title: "a#video-title-link"
+  video_player: "#movie_player video"
+  play_button: ".ytp-play-button"
+  pause_button: ".ytp-pause-button"
+  volume_button: ".ytp-mute-button"
+  settings_button: ".ytp-settings-button"
+  fullscreen_button: ".ytp-fullscreen-button"
+  subscribe_button: "#subscribe-button"
+  like_button: "#segmented-like-button"
+  comments_section: "#comments"
+  video_description: "#description"
+  channel_name: "#channel-name"
+  video_count: "#video-count"
+  subscriber_count: "#subscriber-count"
+
+# Performance optimizations
+optimizations:
+  disable_autoplay: true
+  disable_annotations: true
+  disable_chat: true
+  disable_recommendations: true
+  preload_video: "none"
+  quality_default: "auto"
+
+# Custom scripts
+scripts:
+  - |
+    // Disable autoplay
+    if (window.ytplayer && ytplayer.config) {
+      ytplayer.config.args.autoplay = '0';
+    }
+  - |
+    // Remove distracting elements
+    function removeDistractions() {
+      const elements = [
+        'ytd-merch-shelf-renderer',
+        'ytd-promoted-video-renderer',
+        '#related',
+        '#chat'
+      ];
+      elements.forEach(selector => {
+        const el = document.querySelector(selector);
+        if (el) el.remove();
+      });
+    }
+    document.addEventListener('DOMContentLoaded', removeDistractions);
+
+# Custom styles
+styles:
+  - |
+    /* Hide distracting elements */
+    ytd-merch-shelf-renderer,
+    ytd-promoted-video-renderer,
+    .ytp-ce-element,
+    .ytp-cards-teaser,
+    .ytp-pause-overlay {
+      display: none !important;
+    }
+    
+    /* Enhance video player */
+    #movie_player {
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Improve readability */
+    #video-title {
+      font-size: 16px !important;
+      line-height: 1.4 !important;
+    }
+    
+    #description {
+      font-size: 14px !important;
+      line-height: 1.6 !important;
+    }
+
+# Navigation settings
+navigation:
+  timeout: 30000
+  wait_until: "domcontentloaded"
 
 # Custom user agent
 user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-
-# Block unnecessary resources for better performance
-block_resources:
-  - "analytics"
-  - "doubleclick"
-  - "googlesyndication"
-  - "adservice"
 
 # Custom JavaScript for enhanced functionality
 scripts:
@@ -164,11 +265,6 @@ permissions:
   - "camera"
   - "microphone"
   - "geolocation"
-
-# Custom headers
-headers:
-  "Accept-Language": "en-US,en;q=0.9"
-  "DNT": "1"
 
 # Timing settings
 timing:

@@ -1,0 +1,75 @@
+{
+  "timestamp": "2025-02-09T07:58:27.380248",
+  "cookies": [
+    {
+      "name": "WeatherLocality",
+      "value": "CESKA_REPUBLIKA",
+      "domain": ".seznam.cz",
+      "path": "/",
+      "expires": 1741676294,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "sznIsFullyCompatible",
+      "value": "1",
+      "domain": "www.seznam.cz",
+      "path": "/",
+      "expires": 1739689094,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "user-flags",
+      "value": "",
+      "domain": ".seznam.cz",
+      "path": "/",
+      "expires": 1773644301.784489,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "last-redirect",
+      "value": "1",
+      "domain": ".www.seznam.cz",
+      "path": "/",
+      "expires": 1739085191.051,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "__cw_snc",
+      "value": "1",
+      "domain": ".seznam.cz",
+      "path": "/",
+      "expires": 1739087891.778,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "requestId",
+      "value": "UxM44MI4EP10lzeQfZ60IFhfJcNyL+DZ+M1HLfi0fv16My4/2aVcI14TJCqzgx1h/4mUIXkK/TTKRQ1KG5/bQ/gX8pcoudU9qLyoR167Dgc1MniFc97Cnmftmptu38BEO5PoUjsX8pyIrjgMZkPMFK8pO6bN5HJDEQ6QAgBU+eg=",
+      "domain": ".seznam.cz",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "lps",
+      "value": "eyJfZnJlc2giOmZhbHNlLCJfcGVybWFuZW50Ijp0cnVlfQ.Z6hSDQ.M_g3WPmiVhXQRs4X88wmyMKtFhY",
+      "domain": ".seznam.cz",
+      "path": "/",
+      "expires": 1741762701,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    }
+  ]
+}

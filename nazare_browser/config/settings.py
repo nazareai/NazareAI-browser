@@ -1,156 +1,173 @@
-from typing import Dict, Any, Optional
+"""Configuration management for NazareAI Browser."""
+from typing import Dict, Any, Optional, List, Union
 from pathlib import Path
 import yaml
-from urllib.parse import urlparse
-from playwright.async_api import Page
+from pydantic import BaseModel, Field
+from pydantic_settings import BaseSettings
 import logging
+from ..exceptions import ConfigurationError
 
 logger = logging.getLogger(__name__)
 
+class BrowserConfig(BaseModel):
+    """Browser configuration settings."""
+    headless: bool = Field(default=False, description="Run browser in headless mode")
+    viewport: Dict[str, int] = Field(
+        default={"width": 1280, "height": 720},
+        description="Browser viewport dimensions"
+    )
+    default_timeout: int = Field(default=30000, description="Default timeout in milliseconds")
+    default_navigation_timeout: int = Field(default=30000, description="Navigation timeout in milliseconds")
+    downloads_path: str = Field(default="./downloads", description="Path for downloaded files")
+    screenshots_path: str = Field(default="./screenshots", description="Path for screenshots")
+    block_resources: bool = Field(default=False, description="Whether to block non-critical resources")
+    user_agent: Optional[str] = Field(default=None, description="Custom user agent string")
+    launch_args: List[str] = Field(default_factory=list, description="Browser launch arguments")
+
+class LLMConfig(BaseModel):
+    """LLM configuration settings."""
+    model: str = Field(
+        default="anthropic/claude-3.5-sonnet:beta",
+        description="LLM model to use"
+    )
+    temperature: float = Field(default=0.7, description="LLM temperature")
+    max_tokens: int = Field(default=2000, description="Maximum tokens per request")
+    context_window: int = Field(default=100000, description="Context window size")
+
+class PluginConfig(BaseModel):
+    """Plugin configuration settings."""
+    custom_plugins_dir: str = Field(default="./plugins", description="Custom plugins directory")
+    enabled_plugins: Dict[str, bool] = Field(default_factory=dict, description="Enabled/disabled plugins")
+
+class LoggingConfig(BaseModel):
+    """Logging configuration settings."""
+    level: str = Field(default="INFO", description="Logging level")
+    file: Optional[str] = Field(default=None, description="Log file path")
+    format: str = Field(
+        default="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        description="Log format string"
+    )
+
+class CacheConfig(BaseModel):
+    """Cache configuration settings."""
+    enabled: bool = Field(default=True, description="Enable caching")
+    directory: str = Field(default=".cache", description="Cache directory")
+    max_size_mb: int = Field(default=1000, description="Maximum cache size in MB")
+    ttl_seconds: int = Field(default=3600, description="Cache TTL in seconds")
+
+class CookieConfig(BaseModel):
+    """Cookie configuration settings."""
+    max_age_days: int = Field(default=7, description="Maximum cookie age in days")
+    domains: Dict[str, Dict[str, Any]] = Field(default_factory=dict, description="Domain-specific cookie settings")
+
+class ResourceBlockingConfig(BaseModel):
+    """Resource blocking configuration."""
+    enabled: bool = Field(default=True, description="Enable resource blocking")
+    blocked_resources: List[str] = Field(default_factory=list, description="Resource patterns to block")
+    allowed_domains: List[str] = Field(default_factory=list, description="Domains to allow resources from")
+
+class HeadersConfig(BaseModel):
+    """Headers configuration."""
+    ft_com: Dict[str, Union[str, int]] = Field(default_factory=dict, alias="ft.com", description="Headers for ft.com")
+
+class NavigationConfig(BaseModel):
+    """Navigation configuration."""
+    timeout: int = Field(default=30000, description="Navigation timeout")
+    wait_until: str = Field(default="networkidle", description="Wait until condition")
+    referer: str = Field(default="https://www.google.com", description="Default referer")
+
+class ElementFindingConfig(BaseModel):
+    """Element finding configuration."""
+    timeout: int = Field(default=10000, description="Element finding timeout")
+    retry_interval: int = Field(default=500, description="Retry interval")
+    max_retries: int = Field(default=3, description="Maximum retries")
+
+class Settings(BaseSettings):
+    """Main application settings."""
+    browser: BrowserConfig = Field(default_factory=BrowserConfig)
+    llm: LLMConfig = Field(default_factory=LLMConfig)
+    plugins: PluginConfig = Field(default_factory=PluginConfig)
+    logging: LoggingConfig = Field(default_factory=LoggingConfig)
+    cache: CacheConfig = Field(default_factory=CacheConfig)
+    domains_config_dir: str = Field(default="config/domains", description="Domain-specific config directory")
+    cookies: CookieConfig = Field(default_factory=CookieConfig)
+    resource_blocking: ResourceBlockingConfig = Field(default_factory=ResourceBlockingConfig)
+    headers: HeadersConfig = Field(default_factory=HeadersConfig)
+    navigation: NavigationConfig = Field(default_factory=NavigationConfig)
+    element_finding: ElementFindingConfig = Field(default_factory=ElementFindingConfig)
+
+    class Config:
+        populate_by_name = True
+
+    @classmethod
+    def load_from_file(cls, config_path: Optional[Path] = None) -> 'Settings':
+        """Load settings from a YAML file."""
+        if not config_path:
+            config_path = Path("config/browser.yaml")
+
+        try:
+            if config_path.exists():
+                with open(config_path) as f:
+                    config_data = yaml.safe_load(f)
+                return cls(**config_data)
+            else:
+                logger.warning(f"Config file not found at {config_path}, using defaults")
+                return cls()
+        except Exception as e:
+            logger.error(f"Error loading config: {str(e)}")
+            raise ConfigurationError(f"Failed to load configuration: {str(e)}")
+
+    def get_domain_settings(self, domain: str) -> Dict[str, Any]:
+        """Get domain-specific settings."""
+        try:
+            domain_config_path = Path(self.domains_config_dir) / f"{domain}.yaml"
+            if domain_config_path.exists():
+                with open(domain_config_path) as f:
+                    return yaml.safe_load(f)
+            return {}
+        except Exception as e:
+            logger.error(f"Error loading domain config for {domain}: {str(e)}")
+            return {}
 
 class DomainSettings:
-    def __init__(self, config_dir: Optional[Path] = None):
-        self.config_dir = config_dir or Path("config/domains")
-        self.settings_cache: Dict[str, Dict[str, Any]] = {}
-        self._load_settings()
-    
-    def _load_settings(self):
-        """Load all domain settings from the config directory."""
-        if not self.config_dir.exists():
-            logger.warning(f"Domain settings directory {self.config_dir} does not exist")
-            return
-        
-        for config_file in self.config_dir.glob("*.yaml"):
-            try:
-                with open(config_file) as f:
-                    domain_settings = yaml.safe_load(f)
-                    if isinstance(domain_settings, dict):
-                        domain = config_file.stem
-                        self.settings_cache[domain] = domain_settings
-            except Exception as e:
-                logger.error(f"Failed to load domain settings from {config_file}: {str(e)}")
-    
-    def _get_domain_settings(self, url: str) -> Dict[str, Any]:
+    """Domain-specific settings manager."""
+    def __init__(self):
+        self.settings = Settings.load_from_file()
+        self._domain_cache: Dict[str, Dict[str, Any]] = {}
+
+    def get_settings(self, domain: str) -> Dict[str, Any]:
         """Get settings for a specific domain."""
-        domain = urlparse(url).netloc
-        
-        # Try exact domain match
-        if domain in self.settings_cache:
-            return self.settings_cache[domain]
-        
-        # Try wildcard match
-        base_domain = ".".join(domain.split(".")[-2:])  # e.g., "google.com" from "www.google.com"
-        if base_domain in self.settings_cache:
-            return self.settings_cache[base_domain]
-        
-        # Return default settings
-        return self.settings_cache.get("default", {})
-    
-    async def apply_settings(self, page: Page, url: str):
+        if domain not in self._domain_cache:
+            self._domain_cache[domain] = self.settings.get_domain_settings(domain)
+        return self._domain_cache[domain]
+
+    async def apply_settings(self, page: Any, url: str):
         """Apply domain-specific settings to a page."""
-        settings = self._get_domain_settings(url)
-        
+        from urllib.parse import urlparse
+        domain = urlparse(url).netloc
+        settings = self.get_settings(domain)
+
+        if not settings:
+            return
+
         try:
-            # Apply viewport settings
-            if "viewport" in settings:
-                await page.set_viewport_size(settings["viewport"])
-            
-            # Apply user agent
-            if "user_agent" in settings:
-                await page.set_extra_http_headers({"User-Agent": settings["user_agent"]})
-            
-            # Apply geolocation
-            if "geolocation" in settings:
-                context = page.context
-                await context.grant_permissions(['geolocation'])
-                await context.set_geolocation(settings["geolocation"])
-            
-            # Apply permissions
-            if "permissions" in settings:
-                for permission in settings["permissions"]:
-                    await page.context.grant_permissions([permission])
-            
-            # Apply custom JavaScript
-            if "scripts" in settings:
-                for script in settings["scripts"]:
-                    await page.add_init_script(script=script)
-            
-            # Apply custom styles
-            if "styles" in settings:
-                for style in settings["styles"]:
-                    await page.evaluate(f"""
-                        const style = document.createElement('style');
-                        style.textContent = `{style}`;
-                        document.head.appendChild(style);
-                    """)
-            
-            # Apply cookie settings
-            if "cookies" in settings:
-                await page.context.add_cookies(settings["cookies"])
-            
-            # Apply request headers
+            # Apply headers
             if "headers" in settings:
                 await page.set_extra_http_headers(settings["headers"])
-            
-            # Apply request interception rules
-            if "block_resources" in settings:
-                for resource_type in settings["block_resources"]:
-                    await page.route(f"**/*.{resource_type}", lambda route: route.abort())
-            
-            # Apply custom timing settings
-            if "timing" in settings:
-                timing = settings["timing"]
-                if "default_timeout" in timing:
-                    page.set_default_timeout(timing["default_timeout"])
-                if "default_navigation_timeout" in timing:
-                    page.set_default_navigation_timeout(timing["default_navigation_timeout"])
-            
-            logger.info(f"Applied domain settings for {url}")
-            
+
+            # Apply cookies
+            if "cookies" in settings:
+                for cookie in settings["cookies"]:
+                    await page.context.add_cookies([cookie])
+
+            # Apply other domain-specific settings
+            if "viewport" in settings:
+                await page.set_viewport_size(settings["viewport"])
+
+            if "user_agent" in settings:
+                await page.set_user_agent(settings["user_agent"])
+
+            logger.info(f"Applied domain settings for {domain}")
+
         except Exception as e:
-            logger.error(f"Failed to apply domain settings for {url}: {str(e)}")
-    
-    def create_domain_settings(self, domain: str, settings: Dict[str, Any]):
-        """Create or update settings for a domain."""
-        try:
-            # Ensure config directory exists
-            self.config_dir.mkdir(parents=True, exist_ok=True)
-            
-            # Write settings to file
-            config_file = self.config_dir / f"{domain}.yaml"
-            with open(config_file, "w") as f:
-                yaml.safe_dump(settings, f)
-            
-            # Update cache
-            self.settings_cache[domain] = settings
-            
-            logger.info(f"Created domain settings for {domain}")
-            
-        except Exception as e:
-            logger.error(f"Failed to create domain settings for {domain}: {str(e)}")
-            raise
-    
-    def get_default_settings(self) -> Dict[str, Any]:
-        """Get the default domain settings template."""
-        return {
-            "viewport": {
-                "width": 1920,
-                "height": 1080
-            },
-            "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-            "geolocation": {
-                "latitude": 0,
-                "longitude": 0,
-                "accuracy": 100
-            },
-            "permissions": [],
-            "scripts": [],
-            "styles": [],
-            "cookies": [],
-            "headers": {},
-            "block_resources": [],
-            "timing": {
-                "default_timeout": 30000,
-                "default_navigation_timeout": 30000
-            }
-        } 
+            logger.error(f"Error applying domain settings for {domain}: {str(e)}") 
