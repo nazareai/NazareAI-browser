@@ -1,14 +1,41 @@
 // DOM Utilities for NazareAI Browser
 (function() {
     // Only initialize if not already present
-    if (window.NazareDOM) return;
+    if (window.NazareDOM) {
+        // If already exists, just rescan
+        window.NazareDOM.scanForInteractiveElements();
+        return;
+    }
 
     window.NazareDOM = {
         config: {
             overlayId: 'nazare-overlay-container',
             styleId: 'nazare-styles',
-            elementCounter: 0
+            elementCounter: 0,
+            // Add minimum dimensions for elements
+            minElementSize: {
+                width: 5,
+                height: 5
+            },
+            // Add common interactive class patterns
+            interactiveClassPatterns: [
+                'button', 'menu', 'menuitem', 'link', 'checkbox', 'radio',
+                'slider', 'tab', 'tabpanel', 'textbox', 'combobox', 'grid',
+                'listbox', 'option', 'progressbar', 'scrollbar', 'searchbox',
+                'switch', 'tree', 'treeitem', 'spinbutton', 'tooltip', 'a-button-inner', 'a-dropdown-button', 'click', 
+                'menuitemcheckbox', 'menuitemradio', 'a-button-text', 'button-text', 'button-icon', 'button-icon-only', 
+                'button-text-icon-only', 'dropdown', 'combobox', 'expendable'
+            ],
+            // New configuration options
+            shadowDOMEnabled: true,
+            iframeSupport: true,
+            coordinateTracking: true,
+            xpathGeneration: true,
+            viewportExpansion: 0
         },
+
+        // Add data storage for DOM tree representation
+        domTree: null,
 
         init() {
             // Create overlay container
@@ -39,6 +66,7 @@
                     z-index: 2147483647;
                     transition: opacity 0.2s;
                     overflow: visible;
+                    background-color: rgba(29, 155, 240, 0.1);
                 }
                 .nazare-number {
                     position: absolute;
@@ -81,28 +109,63 @@
                     background: rgba(139, 195, 74, 0.9);
                 }
                 .nazare-overlay-button {
-                    box-shadow: 0 0 0 2px rgba(255, 64, 129, 0.5);
+                    background-color: rgba(255, 64, 129, 0.1);
+                    box-shadow: 0 0 0 1px rgba(255, 64, 129, 0.2);
                 }
                 .nazare-overlay-link {
-                    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.5);
+                    background-color: rgba(33, 150, 243, 0.1);
+                    box-shadow: 0 0 0 1px rgba(33, 150, 243, 0.2);
                 }
                 .nazare-overlay-searchbox {
-                    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.5);
+                    background-color: rgba(76, 175, 80, 0.1);
+                    box-shadow: 0 0 0 1px rgba(76, 175, 80, 0.2);
                 }
                 .nazare-overlay-video {
-                    box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.5);
+                    background-color: rgba(255, 193, 7, 0.1);
+                    box-shadow: 0 0 0 1px rgba(255, 193, 7, 0.2);
                 }
                 .nazare-overlay-player {
-                    box-shadow: 0 0 0 2px rgba(156, 39, 176, 0.5);
+                    background-color: rgba(156, 39, 176, 0.1);
+                    box-shadow: 0 0 0 1px rgba(156, 39, 176, 0.2);
                 }
                 .nazare-overlay-menu {
-                    box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.5);
+                    background-color: rgba(255, 152, 0, 0.1);
+                    box-shadow: 0 0 0 1px rgba(255, 152, 0, 0.2);
                 }
                 .nazare-overlay-navigation {
-                    box-shadow: 0 0 0 2px rgba(0, 188, 212, 0.5);
+                    background-color: rgba(0, 188, 212, 0.1);
+                    box-shadow: 0 0 0 1px rgba(0, 188, 212, 0.2);
                 }
                 .nazare-overlay-tab {
-                    box-shadow: 0 0 0 2px rgba(139, 195, 74, 0.5);
+                    background-color: rgba(139, 195, 74, 0.1);
+                    box-shadow: 0 0 0 1px rgba(139, 195, 74, 0.2);
+                }
+                .nazare-overlay-highlight:hover {
+                    background-color: rgba(29, 155, 240, 0.15);
+                }
+                .nazare-overlay-button:hover {
+                    background-color: rgba(255, 64, 129, 0.15);
+                }
+                .nazare-overlay-link:hover {
+                    background-color: rgba(33, 150, 243, 0.15);
+                }
+                .nazare-overlay-searchbox:hover {
+                    background-color: rgba(76, 175, 80, 0.15);
+                }
+                .nazare-overlay-video:hover {
+                    background-color: rgba(255, 193, 7, 0.15);
+                }
+                .nazare-overlay-player:hover {
+                    background-color: rgba(156, 39, 176, 0.15);
+                }
+                .nazare-overlay-menu:hover {
+                    background-color: rgba(255, 152, 0, 0.15);
+                }
+                .nazare-overlay-navigation:hover {
+                    background-color: rgba(0, 188, 212, 0.15);
+                }
+                .nazare-overlay-tab:hover {
+                    background-color: rgba(139, 195, 74, 0.15);
                 }
                 .nazare-overlay-label {
                     position: absolute;
@@ -176,125 +239,275 @@
             // Initialize
             this.scanForInteractiveElements();
             this.setupObservers();
+            this.setupShadowDOMObserver();
+            this.setupIframeObserver();
+            this.initializeCoordinateTracking();
         },
 
-        scanForInteractiveElements() {
-            // Reset counter when scanning starts
+        scanForInteractiveElements(root = document) {
             this.config.elementCounter = 0;
             
-            // Clear existing overlays
             const overlay = document.getElementById(this.config.overlayId);
             if (overlay) {
                 overlay.innerHTML = '';
             }
 
-            // Scan for elements
-            this.findInteractiveElements().forEach(el => {
-                this.createOverlay(el);
-            });
+            // Reset DOM tree
+            this.domTree = {};
+
+            // Get all elements including shadow DOM and iframes
+            const allElements = this.getAllElements(root);
+            
+            // Filter and sort elements
+            const interactiveElements = allElements
+                .filter(el => {
+                    if (!this.isElementVisible(el)) return false;
+
+                    const rect = el.getBoundingClientRect();
+                    if (rect.width < this.config.minElementSize.width || 
+                        rect.height < this.config.minElementSize.height) {
+                        return false;
+                    }
+
+                    return (
+                        this.isSemanticInteractive(el) ||
+                        this.hasInteractiveRole(el) ||
+                        this.hasInteractiveStyle(el) ||
+                        this.hasInteractiveClass(el) ||
+                        this.hasInteractiveText(el)
+                    );
+                })
+                .sort((a, b) => this.getElementDepth(b) - this.getElementDepth(a));
+
+            interactiveElements.forEach(el => this.createOverlay(el));
         },
 
-        findInteractiveElements() {
-            const elements = [];
+        getAllElements(root) {
+            // Handle different types of roots
+            let elements = [];
             
-            // Define selectors for different types of elements
-            const selectors = {
-                // Search elements
-                search: `
-                    input#search,
-                    input[name="search_query"],
-                    input[aria-label="Search"],
-                    button#search-icon-legacy,
-                    button[aria-label="Search"]
-                `,
-                // Video elements
-                video: `
-                    a#video-title-link,
-                    ytd-video-renderer a#thumbnail,
-                    ytd-compact-video-renderer a#thumbnail,
-                    ytd-grid-video-renderer a#thumbnail,
-                    ytd-rich-item-renderer a#thumbnail,
-                    ytd-video-renderer h3,
-                    ytd-compact-video-renderer h3,
-                    ytd-grid-video-renderer h3,
-                    ytd-rich-item-renderer h3
-                `,
-                // Player controls
-                player: `
-                    .ytp-play-button,
-                    .ytp-mute-button,
-                    .ytp-settings-button,
-                    .ytp-fullscreen-button,
-                    .ytp-volume-panel,
-                    .ytp-prev-button,
-                    .ytp-next-button,
-                    .ytp-subtitles-button,
-                    .ytp-size-button,
-                    .ytp-chapter-container
-                `,
-                // Navigation elements
-                navigation: `
-                    ytd-guide-entry-renderer a,
-                    ytd-mini-guide-entry-renderer a,
-                    #guide-button,
-                    ytd-topbar-menu-button-renderer button,
-                    ytd-guide-section-renderer h3,
-                    ytd-guide-section-renderer ytd-guide-entry-renderer,
-                    #sections > ytd-guide-section-renderer
-                `,
-                // Interactive buttons
-                buttons: `
-                    ytd-button-renderer button,
-                    ytd-toggle-button-renderer button,
-                    button[aria-label],
-                    yt-button-renderer button,
-                    ytd-menu-renderer button,
-                    ytd-menu-service-item-renderer button,
-                    ytd-subscribe-button-renderer button
-                `,
-                // Menu items
-                menu: `
-                    ytd-menu-renderer,
-                    ytd-menu-service-item-renderer,
-                    tp-yt-paper-item,
-                    ytd-menu-popup-renderer,
-                    ytd-multi-page-menu-renderer
-                `,
-                // Tabs and filters
-                tabs: `
-                    yt-chip-cloud-chip-renderer,
-                    ytd-feed-filter-chip-bar-renderer,
-                    ytd-video-primary-info-renderer ytd-expander,
-                    ytd-comments-header-renderer,
-                    ytd-watch-metadata
-                `,
-                // Channel elements
-                channel: `
-                    ytd-channel-name,
-                    #owner-container,
-                    #channel-header,
-                    #avatar-link,
-                    ytd-video-owner-renderer
-                `
-            };
+            try {
+                // For shadow roots, use querySelectorAll instead of getElementsByTagName
+                if (root instanceof ShadowRoot) {
+                    elements = Array.from(root.querySelectorAll('*'));
+                } else if (root instanceof Document || root instanceof Element) {
+                    // For regular document/elements, use getElementsByTagName
+                    elements = Array.from(root.getElementsByTagName('*'));
+                } else {
+                    console.warn('Invalid root element type:', root);
+                    return [];
+                }
 
-            // Find elements for each type
-            Object.entries(selectors).forEach(([type, selector]) => {
-                document.querySelectorAll(selector).forEach(el => {
-                    if (this.isElementVisible(el)) {
-                        elements.push(el);
+                if (this.config.shadowDOMEnabled) {
+                    elements = elements.reduce((acc, el) => {
+                        acc.push(el);
+                        if (el.shadowRoot) {
+                            acc.push(...this.getAllElements(el.shadowRoot));
+                        }
+                        return acc;
+                    }, []);
+                }
+
+                if (this.config.iframeSupport) {
+                    let iframes;
+                    if (root instanceof ShadowRoot) {
+                        iframes = root.querySelectorAll('iframe');
+                    } else {
+                        iframes = root.getElementsByTagName('iframe');
                     }
-                });
-            });
+                    
+                    for (const iframe of iframes) {
+                        try {
+                            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                            if (iframeDoc) {
+                                elements.push(...this.getAllElements(iframeDoc));
+                            }
+                        } catch (e) {
+                            console.warn('Unable to access iframe:', e);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('Error in getAllElements:', e);
+                return [];
+            }
 
             return elements;
         },
 
-        createOverlay(element) {
-            const type = this.getElementType(element);
-            if (!type) return;
+        isSemanticInteractive(el) {
+            // Core interactive elements that should always be included
+            const coreInteractive = [
+                'A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'
+            ];
+            
+            // Heading elements that should be meaningful
+            const headings = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6'];
+            
+            // Other potentially interactive elements that need additional checks
+            const otherInteractive = [
+                'ARTICLE', 'NAV', 'HEADER', 'FOOTER'
+            ];
+            
+            // Always include core interactive elements with additional checks
+            if (coreInteractive.includes(el.tagName)) {
+                // For links, only include if they have href or role
+                if (el.tagName === 'A') {
+                    return el.hasAttribute('href') || el.hasAttribute('role');
+                }
+                return true;
+            }
+            
+            // Include headings only if they are main content headings
+            if (headings.includes(el.tagName)) {
+                const text = el.textContent.trim();
+                return text.length > 0 && text.length < 200 && !el.closest('footer');
+            }
+            
+            // For other elements, require strong interactive signals
+            if (otherInteractive.includes(el.tagName)) {
+                return (
+                    el.hasAttribute('onclick') ||
+                    el.getAttribute('tabindex') === '0' ||
+                    el.getAttribute('role') === 'button' ||
+                    el.getAttribute('role') === 'link' ||
+                    el.getAttribute('role') === 'menuitem'
+                );
+            }
+            
+            return false;
+        },
 
-            const rect = element.getBoundingClientRect();
+        hasInteractiveRole(el) {
+            // More focused set of interactive roles
+            const interactiveRoles = [
+                'button', 'link', 'menuitem', 'tab',
+                'searchbox', 'textbox', 'menu'
+            ];
+            
+            const role = el.getAttribute('role');
+            return role && interactiveRoles.includes(role.toLowerCase());
+        },
+
+        hasInteractiveStyle(el) {
+            const style = window.getComputedStyle(el);
+            
+            // Only consider pointer cursor if element has other interactive traits
+            if (style.cursor === 'pointer') {
+                return (
+                    el.hasAttribute('onclick') ||
+                    el.hasAttribute('role') ||
+                    el.tagName === 'BUTTON' ||
+                    el.tagName === 'A' ||
+                    el.querySelector('a, button') !== null
+                );
+            }
+            
+            // Include elements with tabindex=0
+            if (el.getAttribute('tabindex') === '0') {
+                return true;
+            }
+            
+            return false;
+        },
+
+        hasInteractiveClass(el) {
+            let classNames = '';
+            try {
+                // Handle different types of className (SVG vs HTML elements)
+                if (typeof el.className === 'string') {
+                    classNames = el.className;
+                } else if (el.className && typeof el.className.baseVal === 'string') {
+                    classNames = el.className.baseVal;
+                } else if (el.getAttribute('class')) {
+                    classNames = el.getAttribute('class');
+                }
+                
+                classNames = (classNames || '').toLowerCase();
+                
+                // Very focused set of interactive class patterns
+                const patterns = [
+                    'btn', 'button',
+                    'nav-item',
+                    'menu-item',
+                    'search-box',
+                    'article-title'
+                ];
+                
+                // Only include if the element also has other interactive traits
+                if (patterns.some(pattern => classNames.includes(pattern))) {
+                    return (
+                        el.hasAttribute('onclick') ||
+                        el.hasAttribute('role') ||
+                        el.tagName === 'A' ||
+                        el.tagName === 'BUTTON' ||
+                        window.getComputedStyle(el).cursor === 'pointer'
+                    );
+                }
+                
+                return false;
+            } catch (e) {
+                console.debug('Error checking className:', e);
+                return false;
+            }
+        },
+
+        hasInteractiveText(el) {
+            // Only process elements that directly contain text
+            const hasDirectText = Array.from(el.childNodes)
+                .some(node => node.nodeType === Node.TEXT_NODE && 
+                            node.textContent.trim().length > 0);
+            
+            if (!hasDirectText) return false;
+            
+            const text = el.textContent.trim();
+            
+            // Skip if text is too long or too short
+            if (text.length < 2 || text.length > 150) return false;
+            
+            // Only consider text content for elements that are likely interactive
+            if (
+                el.tagName === 'A' ||
+                el.tagName === 'BUTTON' ||
+                el.hasAttribute('role') ||
+                el.hasAttribute('onclick') ||
+                window.getComputedStyle(el).cursor === 'pointer'
+            ) {
+                // Common interactive text patterns
+                const patterns = [
+                    'sign in', 'login', 'subscribe',
+                    'search', 'menu', 'more', 'view all'
+                ];
+                
+                return patterns.some(pattern => text.toLowerCase().includes(pattern));
+            }
+            
+            // For article titles, require specific structure
+            if (el.closest('article')) {
+                return (
+                    text.length > 10 &&
+                    text.length < 150 &&
+                    /^[A-Z]/.test(text) &&
+                    (el.tagName.match(/^H[1-6]$/) || el.classList.contains('title'))
+                );
+            }
+            
+            return false;
+        },
+
+        // Helper function to get element's depth in DOM tree
+        getElementDepth(element) {
+            let depth = 0;
+            let current = element;
+            while (current.parentElement) {
+                depth++;
+                current = current.parentElement;
+            }
+            return depth;
+        },
+
+        createOverlay(el) {
+            const rect = el.getBoundingClientRect();
             if (!rect.width || !rect.height) return;
 
             const overlay = document.getElementById(this.config.overlayId);
@@ -305,91 +518,47 @@
             const elementNumber = this.config.elementCounter;
 
             const highlight = document.createElement('div');
-            highlight.className = `nazare-overlay-highlight nazare-overlay-${type}`;
+            highlight.className = `nazare-overlay-highlight nazare-overlay-${this.getElementType(el)}`;
             
-            // Position the highlight
+            // Position the highlight with absolute coordinates
             highlight.style.cssText = `
                 left: ${rect.left + window.scrollX}px;
                 top: ${rect.top + window.scrollY}px;
                 width: ${rect.width}px;
                 height: ${rect.height}px;
+                pointer-events: none;
+                position: absolute;
+                z-index: ${2147483647 - this.getElementDepth(el)}; // Ensure proper stacking
             `;
 
             // Add number indicator
             const number = document.createElement('div');
-            number.className = `nazare-number nazare-number-${type}`;
+            number.className = `nazare-number nazare-number-${this.getElementType(el)}`;
             number.textContent = elementNumber;
             highlight.appendChild(number);
 
-            // Add Nazare-specific metadata
-            const metadata = this.getNazareMetadata(element, type);
-            if (metadata.action) {
-                highlight.setAttribute('data-nazare-action', metadata.action);
-            }
-
-            // Store the number reference
+            // Store references
             highlight.setAttribute('data-nazare-number', elementNumber);
-            element.setAttribute('data-nazare-number', elementNumber);
+            el.setAttribute('data-nazare-number', elementNumber);
 
-            // Add other metadata
-            highlight.setAttribute('data-nazare-type', type);
-            highlight.setAttribute('data-nazare-text', metadata.label);
-            highlight.setAttribute('data-nazare-rect', JSON.stringify(rect));
-            if (metadata.context) {
-                highlight.setAttribute('data-nazare-context', metadata.context);
-            }
+            // Add element info for debugging
+            highlight.setAttribute('data-nazare-tag', el.tagName.toLowerCase());
+            highlight.setAttribute('data-nazare-depth', this.getElementDepth(el));
 
             overlay.appendChild(highlight);
         },
 
-        getElementType(element) {
-            // Search elements
-            if (element.matches('input#search') || 
-                element.matches('input[name="search_query"]') ||
-                element.matches('input[aria-label="Search"]')) {
-                return 'searchbox';
-            }
-            if (element.matches('button#search-icon-legacy') ||
-                element.matches('button[aria-label="Search"]')) {
-                return 'button';
-            }
-
-            // Video elements
-            if (element.matches('a#video-title-link, ytd-video-renderer a#thumbnail, ytd-compact-video-renderer a#thumbnail, ytd-grid-video-renderer a#thumbnail, ytd-rich-item-renderer a#thumbnail')) {
-                return 'video';
-            }
-
-            // Player controls
-            if (element.matches('.ytp-play-button, .ytp-mute-button, .ytp-settings-button, .ytp-fullscreen-button, .ytp-volume-panel, .ytp-prev-button, .ytp-next-button')) {
-                return 'player';
-            }
-
-            // Navigation elements
-            if (element.matches('ytd-guide-entry-renderer a, ytd-mini-guide-entry-renderer a, #guide-button')) {
-                return 'navigation';
-            }
-
-            // Menu items
-            if (element.matches('ytd-menu-renderer, ytd-menu-service-item-renderer, tp-yt-paper-item')) {
-                return 'menu';
-            }
-
-            // Tabs and filters
-            if (element.matches('yt-chip-cloud-chip-renderer, ytd-feed-filter-chip-bar-renderer')) {
-                return 'tab';
-            }
-
-            // Channel elements
-            if (element.matches('ytd-channel-name, #owner-container, #channel-header, #avatar-link')) {
-                return 'link';
-            }
-
-            // Generic buttons
-            if (element.matches('button, ytd-button-renderer button, yt-button-renderer button')) {
-                return 'button';
-            }
-
-            return null;
+        getElementType(el) {
+            // Simplified type detection to ensure we don't miss anything
+            if (el.tagName === 'A' || el.hasAttribute('href')) return 'link';
+            if (el.tagName === 'BUTTON' || el.getAttribute('role') === 'button') return 'button';
+            if (el.tagName === 'INPUT' && el.type === 'search') return 'searchbox';
+            if (el.tagName === 'VIDEO') return 'video';
+            if (el.classList.contains('player')) return 'player';
+            if (el.classList.contains('menu')) return 'menu';
+            if (el.tagName === 'NAV' || el.getAttribute('role') === 'navigation') return 'navigation';
+            if (el.classList.contains('tab')) return 'tab';
+            return 'link'; // Default to link type for better visibility
         },
 
         getNazareMetadata(element, type) {
@@ -569,9 +738,169 @@
 
         findElementByNumber(number) {
             return document.querySelector(`[data-nazare-number="${number}"]`);
+        },
+
+        setupShadowDOMObserver() {
+            if (!this.config.shadowDOMEnabled) return;
+
+            const observeShadowDOM = (node) => {
+                if (node.shadowRoot) {
+                    this.setupObservers(node.shadowRoot);
+                    this.scanForInteractiveElements(node.shadowRoot);
+                }
+            };
+
+            const shadowObserver = new MutationObserver((mutations) => {
+                mutations.forEach(mutation => {
+                    mutation.addedNodes.forEach(node => {
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            observeShadowDOM(node);
+                        }
+                    });
+                });
+            });
+
+            shadowObserver.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        },
+
+        setupIframeObserver() {
+            if (!this.config.iframeSupport) return;
+
+            const iframeObserver = new MutationObserver((mutations) => {
+                mutations.forEach(mutation => {
+                    mutation.addedNodes.forEach(node => {
+                        if (node.tagName === 'IFRAME') {
+                            this.handleIframe(node);
+                        }
+                    });
+                });
+            });
+
+            iframeObserver.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        },
+
+        handleIframe(iframe) {
+            try {
+                iframe.addEventListener('load', () => {
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                    if (iframeDoc) {
+                        this.setupObservers(iframeDoc);
+                        this.scanForInteractiveElements(iframeDoc);
+                    }
+                });
+            } catch (e) {
+                console.warn('Unable to access iframe:', e);
+            }
+        },
+
+        getXPathForElement(element) {
+            if (!this.config.xpathGeneration) return '';
+
+            const segments = [];
+            let currentElement = element;
+
+            while (currentElement && currentElement.nodeType === Node.ELEMENT_NODE) {
+                if (currentElement.parentNode instanceof ShadowRoot || 
+                    currentElement.parentNode instanceof HTMLIFrameElement) {
+                    break;
+                }
+
+                let index = 0;
+                let sibling = currentElement.previousSibling;
+                while (sibling) {
+                    if (sibling.nodeType === Node.ELEMENT_NODE &&
+                        sibling.nodeName === currentElement.nodeName) {
+                        index++;
+                    }
+                    sibling = sibling.previousSibling;
+                }
+
+                const tagName = currentElement.nodeName.toLowerCase();
+                const xpathIndex = index > 0 ? `[${index + 1}]` : '';
+                segments.unshift(`${tagName}${xpathIndex}`);
+
+                currentElement = currentElement.parentNode;
+            }
+
+            return segments.join('/');
+        },
+
+        getElementCoordinates(element) {
+            if (!this.config.coordinateTracking) return null;
+
+            const rect = element.getBoundingClientRect();
+            const scrollX = window.scrollX;
+            const scrollY = window.scrollY;
+
+            return {
+                viewport: {
+                    topLeft: {
+                        x: Math.round(rect.left),
+                        y: Math.round(rect.top)
+                    },
+                    bottomRight: {
+                        x: Math.round(rect.right),
+                        y: Math.round(rect.bottom)
+                    },
+                    center: {
+                        x: Math.round(rect.left + rect.width/2),
+                        y: Math.round(rect.top + rect.height/2)
+                    }
+                },
+                page: {
+                    topLeft: {
+                        x: Math.round(rect.left + scrollX),
+                        y: Math.round(rect.top + scrollY)
+                    },
+                    bottomRight: {
+                        x: Math.round(rect.right + scrollX),
+                        y: Math.round(rect.bottom + scrollY)
+                    },
+                    center: {
+                        x: Math.round(rect.left + rect.width/2 + scrollX),
+                        y: Math.round(rect.top + rect.height/2 + scrollY)
+                    }
+                },
+                dimensions: {
+                    width: Math.round(rect.width),
+                    height: Math.round(rect.height)
+                }
+            };
+        },
+
+        initializeCoordinateTracking() {
+            // Implementation of initializeCoordinateTracking method
+        },
+
+        exportDOMTree() {
+            return {
+                tree: this.domTree,
+                metadata: {
+                    timestamp: new Date().toISOString(),
+                    url: window.location.href,
+                    viewport: {
+                        width: window.innerWidth,
+                        height: window.innerHeight,
+                        scrollX: window.scrollX,
+                        scrollY: window.scrollY
+                    }
+                }
+            };
         }
     };
 
-    // Initialize
-    window.NazareDOM.init();
-})(); 
+    // Initialize when script loads
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            window.NazareDOM.init();
+        });
+    } else {
+        window.NazareDOM.init();
+    }
+})();
